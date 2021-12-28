@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-smtp-auth-v1
+  namespace: nginx-dev
+  labels:
+    app: nginx-smtp-auth
+    version: v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-smtp-auth
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: nginx-smtp-auth
+        version: v1
+      #annotations:
+        #sidecar.istio.io/inject: "false"
+    spec:
+      imagePullSecrets:
+      - name: regcred
+      containers:
+      - name: auth
+        image: registry.lestak.sh-auth:v0.0.1
+        resources:
+          limits:
+            memory: 4000Mi
+            cpu: 4000m
+          requests:
+            memory: 500Mi
+            cpu: 100m
+        ports:
+        - containerPort: 8080
+          name: http
+        env:
+        - name: SERVERS
+          value: "192.168.1.10,192.168.1.11"
+        - name: HEALTH_CHECK_INTERVAL
+          value: "15s"
+        - name: PORT
+          value: "8080"
+        readinessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 20
